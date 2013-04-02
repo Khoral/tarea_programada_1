@@ -1,0 +1,68 @@
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <sys/select.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+ 
+#define Buffer_Socket 100
+ 
+int main(){          //int argc, char **argv) {
+ 
+FILE *f2;
+    char buf_bienvenida[30];
+    char buffer_envarchivo[1024000];
+   
+    
+        int tam_direccion = sizeof(struct sockaddr_in);
+        //char buffer[Buffer_Socket];
+ 
+        //  descriptor Socket: SOCK_STREAM es para TCP y SOCK_DGRAM para UDP 
+        int desc = socket(AF_INET, SOCK_STREAM, 0);
+        
+ 
+        // Direccion Local 
+        struct sockaddr_in *direcc_loc = malloc(sizeof(struct sockaddr_in));
+        
+ 
+        {       // Puerto local se utilizará el 3650 
+                (*direcc_loc).sin_family = AF_INET;
+                (*direcc_loc).sin_addr.s_addr = inet_addr("192.168.33.145");
+                (*direcc_loc).sin_port = htons(3650);
+ 
+                bind(desc, (struct sockaddr *)direcc_loc , sizeof(struct sockaddr_in));
+        }
+ 
+        // Va a contener maximo 500 conexiones
+        listen(desc, 500);
+        
+		// Direccion remota (se desea conectar a) 
+        struct sockaddr_in *direcc_rem = malloc(sizeof(struct sockaddr_in));
+        
+        //Conexión entrante
+        int clientremoto= accept(desc, (struct sockaddr *)direcc_rem, (void *)&tam_direccion);
+ 
+        // Se imprimirá un mensaje de conexión establecida
+        recv(clientremoto,buf_bienvenida , 30, 0);
+        printf("%s \n",buf_bienvenida);
+    
+    
+ 
+f2 = fopen ("ima", "wb");
+if (f2==NULL){
+   perror("No se puede abrir fichero.dat");
+   return -1;}
+recv(clientremoto, buffer_envarchivo, 1024000, 0);
+fwrite (buffer_envarchivo, 1, strlen(buffer_envarchivo), f2);
+ 
+        //Cierrar el socket 
+        close(desc);
+  
+		//se libera el emisor y el receptor
+        free(direcc_loc ); 
+        free(direcc_rem);  
+ 
+        return EXIT_SUCCESS;
+}

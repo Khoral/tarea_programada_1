@@ -1,0 +1,76 @@
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <sys/select.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+ 
+int main(){  //int argc, char **argv) {
+ 
+ 
+FILE *f1;
+
+
+char buf[30];
+// enviar un mensaje conexion establecida
+ 
+        //  descriptor Socket: SOCK_STREAM es para TCP y SOCK_DGRAM para UDP 
+        int desc = socket(AF_INET, SOCK_STREAM, 0);
+ 
+        // Direccion Local
+        struct sockaddr_in *direcc_loc = malloc(sizeof(struct sockaddr_in));
+        {       
+			
+                (*direcc_loc).sin_family = AF_INET;
+                (*direcc_loc).sin_addr.s_addr = INADDR_ANY;
+                (*direcc_loc).sin_port = htons(3550);
+ 
+                bind(desc, (struct sockaddr *)direcc_loc, sizeof(struct sockaddr_in));
+        }
+        
+        // Direccion remota (se desea conectar a) 
+        struct sockaddr_in *direcc_rem = malloc(sizeof(struct sockaddr_in));
+ 
+        {       
+                (*direcc_rem).sin_family = AF_INET;
+                (*direcc_rem).sin_addr.s_addr = inet_addr("172.0.0.1");
+                (*direcc_rem).sin_port = htons(3650);
+        }
+ 
+        //conectarse al servidor
+        connect(desc, (struct sockaddr *)direcc_rem , sizeof(struct sockaddr_in) );
+ 
+
+
+f1=fopen("1.png","rb");  // rb= read binaria
+if (f1==NULL)
+{
+   perror("No se puede abrir fichero.dat");
+   return -1;
+}
+
+fseek(f1, 0, SEEK_END);
+int len = ftell(f1);
+sprintf(buf,"%d",len);
+char buffer2[len];
+rewind(f1);
+fread (buffer2, 1, len, f1);
+
+ 
+        //Se envía un mensaje de conexión establecida con el servidor
+        send( desc,"Conexión establecida \n",30,0);
+        
+        send(desc,buf,30, 0);
+		send(desc,buffer2, len,0);
+        /* Cierro el socket y por ende la conexion */
+        fclose(f1);
+        close(desc);
+        
+ 
+        free(direcc_loc);
+        free(direcc_rem);
+ 
+        return EXIT_SUCCESS;
+}
